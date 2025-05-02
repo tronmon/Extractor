@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Extractor - Extract Text from Any File</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --accent: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #00b4d8;
+            --gray: #6c757d;
+            --gray-light: #e9ecef;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        /* Light/Dark mode variables */
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-primary: #212529;
+            --text-secondary: #495057;
+            --border: #dee2e6;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --text-primary: #f8f9fa;
+            --text-secondary: #ced4da;
+            --border: #343a40;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: var(--transition);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem 10%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-primary);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .logo i {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            padding: 8rem 10% 4rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4rem;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .hero h1 span {
+            color: var(--primary);
+            position: relative;
+        }
+
+        .hero h1 span::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background-color: rgba(67, 97, 238, 0.3);
+            z-index: -1;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .hero-decorations {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .decoration {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.3;
+        }
+
+        .decoration:nth-child(1) {
+            top: 10%;
+            left: 5%;
+            animation: move 20s linear infinite;
+        }
+
+        .decoration:nth-child(2) {
+            bottom: 20%;
+            right: 10%;
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(45deg, var(--accent), var(--success));
+            animation: move 15s linear infinite reverse;
+        }
+
+        .decoration:nth-child(3) {
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, var(--success), var(--primary));
+            animation: pulse 10s ease infinite;
+        }
+
+        @keyframes move {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(50px, 50px); }
+            50% { transform: translate(0, 100px); }
+            75% { transform: translate(-50px, 50px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.2); opacity: 0.1; }
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.4);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.5);
+        }
+
+        /* File Type Icons */
+        .file-type-icons {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .file-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .icon-circle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+            transition: var(--transition);
+        }
+
+        .icon-circle:hover {
+            transform: scale(1.1);
+        }
+
+        .pdf-icon {
+            background: linear-gradient(45deg, var(--accent), var(--secondary));
+        }
+
+        .image-icon {
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+        }
+
+        .audio-icon {
+            background: linear-gradient(45deg, var(--success), var(--primary));
+        }
+
+        .video-icon {
+            background: linear-gradient(45deg, var(--secondary), var(--success));
+        }
+
+        .icon-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 5rem 10%;
+            background-color: var(--bg-secondary);
+            position: relative;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        .section-title p {
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .features-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background-color: var(--bg-primary);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            z-index: -1;
+            transition: var(--transition);
+        }
+
+        .feature-card:nth-child(1)::before {
+            background: linear-gradient(to bottom, var(--primary), var(--primary-dark));
+        }
+
+        .feature-card:nth-child(2)::before {
+            background: linear-gradient(to bottom, var(--success), var(--primary));
+        }
+
+        .feature-card:nth-child(3)::before {
+            background: linear-gradient(to bottom, var(--accent), var(--secondary));
+        }
+
+        .feature-card:nth-child(4)::before {
+            background: linear-gradient(to bottom, var(--secondary), var(--success));
+        }
+
+        .feature-card:hover::before {
+            width: 100%;
+            opacity: 0.1;
+        }
+
+        .feature-icon {
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            color: white;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+        }
+
+        .feature-card:nth-child(1) .feature-icon {
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+        }
+
+        .feature-card:nth-child(2) .feature-icon {
+            background: linear-gradient(45deg, var(--success), var(--primary));
+        }
+
+        .feature-card:nth-child(3) .feature-icon {
+            background: linear-gradient(45deg, var(--accent), var(--secondary));
+        }
+
+        .feature-card:nth-child(4) .feature-icon {
+            background: linear-gradient(45deg, var(--secondary), var(--success));
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card ul {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .feature-card ul li {
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .feature-card ul li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* How It Works Section */
+        .how-it-works {
+            padding: 5rem 10%;
+            position: relative;
+        }
+
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .step-card {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 12px;
+            background-color: var(--bg-primary);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .step-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .step-number {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .step-card img {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 1.5rem;
+            object-fit: contain;
+        }
+
+        .step-card h3 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .step-card p {
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        footer {
+            padding: 3rem 10%;
+            background-color: var(--bg-primary);
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .footer-logo {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .copyright {
+            width: 100%;
+            text-align: center;
+            margin-top: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Media Queries */
+        @media (max-width: 1024px) {
+            header {
+                padding: 1.5rem 5%;
+            }
+
+            .hero, .features, .how-it-works, footer {
+                padding-left: 5%;
+                padding-right: 5%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                padding-top: 6rem;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .file-type-icons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .steps-container {
+                grid-template-columns: 1fr;
+                max-width: 500px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .file-type-icons {
+                gap: 1rem;
+            }
+
+            .icon-circle {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        .delay-1 { animation-delay: 0.2s; }
+        .delay-2 { animation-delay: 0.4s; }
+        .delay-3 { animation-delay: 0.6s; }
+        .delay-4 { animation-delay: 0.8s; }
+    </style>
+</head>
+<body data-theme="light">
+    <!-- Header -->
+    <header>
+        <a href="#" class="logo">
+            <i class="fas fa-magic"></i>
+            <span>Content Extractor</span>
+        </a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="/app">Get Started</a>
+        </div>
+        <div class="theme-toggle" id="theme-toggle">
+            <i class="fas fa-moon"></i>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-decorations">
+            <div class="decoration"></div>
+            <div class="decoration"></div>
+            <div class="decoration"></div>
+        </div>
+        
+        <div class="hero-content fade-in">
+            <h1>Extract Content from <span>Any File</span> Effortlessly</h1>
+            <p>Transform PDFs, images, audio, and videos into searchable, editable text with our powerful extraction tool. Extract text from scanned documents, transcribe audio, and process videos in one simple platform.</p>
+            
+            <!-- File Type Icons -->
+            <div class="file-type-icons">
+                <div class="file-icon">
+                    <div class="icon-circle pdf-icon">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <span class="icon-label">PDF</span>
+                </div>
+                <div class="file-icon">
+                    <div class="icon-circle image-icon">
+                        <i class="fas fa-image"></i>
+                    </div>
+                    <span class="icon-label">Image</span>
+                </div>
+                <div class="file-icon">
+                    <div class="icon-circle audio-icon">
+                        <i class="fas fa-headphones"></i>
+                    </div>
+                    <span class="icon-label">Audio</span>
+                </div>
+                <div class="file-icon">
+                    <div class="icon-circle video-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <span class="icon-label">Video</span>
+                </div>
+            </div>
+            
+            <a href="/app" class="btn btn-primary" id="get-started">
+                <i class="fas fa-rocket"></i>
+                Get Started
+            </a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="section-title fade-in">
+            <h2>Powerful Extraction Features</h2>
+            <p>Our content extractor handles various file types with specialized processing techniques to deliver accurate results every time.</p>
+        </div>
+        
+        <div class="features-container">
+            <div class="feature-card fade-in delay-1">
+                <div class="feature-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <h3>PDF Extraction</h3>
+                <p>Extract text from both digital and scanned PDF documents with high accuracy.</p>
+                <ul>
+                    <li>Digital PDF text extraction</li>
+                    <li>OCR for scanned documents</li>
+                    <li>Maintains document structure</li>
+                    <li>Multi-page support</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card fade-in delay-2">
+                <div class="feature-icon">
+                    <i class="fas fa-image"></i>
+                </div>
+                <h3>Image Recognition</h3>
+                <p>Extract text from images using advanced OCR technology.</p>
+                <ul>
+                    <li>Supports JPG, PNG, JPEG formats</li>
+                    <li>Handwritten text recognition</li>
+                    <li>Multiple language support</li>
+                    <li>Preserves image quality</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card fade-in delay-3">
+                <div class="feature-icon">
+                    <i class="fas fa-headphones"></i>
+                </div>
+                <h3>Audio Transcription</h3>
+                <p>Convert spoken words from audio files into written text.</p>
+                <ul>
+                    <li>Supports MP3, WAV, M4A formats</li>
+                    <li>High-accuracy speech recognition</li>
+                    <li>Background noise filtering</li>
+                    <li>Audio preview functionality</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card fade-in delay-4">
+                <div class="feature-icon">
+                    <i class="fas fa-video"></i>
+                </div>
+                <h3>Video Processing</h3>
+                <p>Extract audio and subtitles from video files with ease.</p>
+                <ul>
+                    <li>Supports MP4, AVI, MKV formats</li>
+                    <li>Audio track extraction</li>
+                    <li>Speech-to-text conversion</li>
+                    <li>Video preview capability</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="section-title fade-in">
+            <h2>How It Works</h2>
+            <p>Our content extraction process is simple, fast, and efficient - just follow these steps:</p>
+        </div>
+        
+        <div class="steps-container">
+            <div class="step-card fade-in delay-1">
+                <div class="step-number">1</div>
+                <div class="feature-icon">
+                    <i class="fas fa-upload"></i>
+                </div>
+                <h3>Upload Your File</h3>
+                <p>Select and upload your PDF, image, audio, or video file through our simple interface.</p>
+            </div>
+            
+            <div class="step-card fade-in delay-2">
+                <div class="step-number">2</div>
+                <div class="feature-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <h3>Automatic Processing</h3>
+                <p>Our system analyzes your file and applies the appropriate extraction technology automatically.</p>
+            </div>
+            
+            <div class="step-card fade-in delay-3">
+                <div class="step-number">3</div>
+                <div class="feature-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h3>Get Your Text</h3>
+                <p>Download or copy your extracted text in various formats for immediate use.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <a href="#" class="footer-logo">
+                <i class="fas fa-magic"></i>
+                Content Extractor
+            </a>
+            <div class="footer-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="/app">Get Started</a>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+            </div>
+        </div>
+        <div class="copyright">
+            &copy; 2025 Content Extractor. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+        
+        themeToggle.addEventListener('click', () => {
+            if (body.getAttribute('data-theme') === 'light') {
+                body.setAttribute('data-theme', 'dark');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                body.setAttribute('data-theme', 'light');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+        });
+    </script>
+</body>
+</html>

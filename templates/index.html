@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Extractor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Welcome Popup -->
+    <div id="welcome-popup" class="popup-overlay">
+        <div class="popup-content animate-in">
+            <h2>Welcome to Content Extractor</h2>
+            <p>Extract text, audio, video content with ease - including handwritten text!</p>
+            <div class="welcome-icons">
+                <div class="icon-container">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>PDF Files</span>
+                </div>
+                <div class="icon-container">
+                    <i class="fas fa-image"></i>
+                    <span>Image Files</span>
+                </div>
+                <div class="icon-container">
+                    <i class="fas fa-headphones"></i>
+                    <span>Audio Files</span>
+                </div>
+                <div class="icon-container">
+                    <i class="fas fa-video"></i>
+                    <span>Video Files</span>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div id="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Type Selection Popup -->
+    <div id="file-select-popup" class="popup-overlay hidden">
+        <div class="popup-content file-select-content">
+            <h2>Select File Type</h2>
+            <p>Choose the type of file you want to process</p>
+            <div class="file-type-options">
+                <div class="file-type-option" data-type="pdf">
+                    <i class="fas fa-file-pdf"></i>
+                    <h3>PDF Document</h3>
+                    <p>Extract text from digital or scanned PDFs</p>
+                </div>
+                <div class="file-type-option" data-type="image">
+                    <i class="fas fa-image"></i>
+                    <h3>Image File</h3>
+                    <p>Extract text from JPG, PNG or JPEG images</p>
+                </div>
+                <div class="file-type-option" data-type="audio">
+                    <i class="fas fa-headphones"></i>
+                    <h3>Audio File</h3>
+                    <p>Transcribe speech from MP3, WAV or M4A files</p>
+                </div>
+                <div class="file-type-option" data-type="video">
+                    <i class="fas fa-video"></i>
+                    <h3>Video File</h3>
+                    <p>Extract audio and subtitles from MP4, AVI or MKV</p>
+                </div>
+            </div>
+            <button id="file-select-close" class="close-btn"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="theme-toggle">
+                <input type="checkbox" id="theme-switch" class="theme-switch">
+                <label for="theme-switch" class="switch-label">
+                    <i class="fas fa-sun"></i>
+                    <i class="fas fa-moon"></i>
+                    <span class="switch-ball"></span>
+                </label>
+            </div>
+            
+            <h1 class="title-animation">Content Extractor</h1>
+            <p>Upload files to extract text, audio transcriptions, and video content</p>
+        </header>
+        
+        <div class="upload-section">
+            <form id="upload-form" enctype="multipart/form-data">
+                <div class="file-input-wrapper">
+                    <input type="file" id="file-input" name="file" accept=".pdf,.png,.jpg,.jpeg,.mp3,.wav,.m4a,.mp4,.avi,.mkv">
+                    <label for="file-input" class="custom-file-input">
+                        <i class="fas fa-upload icon-animation"></i>
+                        <span id="file-name">Choose a file</span>
+                        <span class="browse-btn">Browse</span>
+                    </label>
+                </div>
+                <button type="submit" id="upload-btn">
+                    <span class="btn-text">Extract Content</span>
+                    <i class="fas fa-magic btn-icon"></i>
+                </button>
+            </form>
+            <div id="loading" class="hidden">
+                <div class="spinner"></div>
+                <p>Processing... This may take a moment.</p>
+            </div>
+        </div>
+        
+        <div id="results" class="hidden">
+            <div class="results-header">
+                <h2>Extracted Content</h2>
+                <span id="filename"></span>
+            </div>
+            
+            <div class="search-container">
+                <div class="search-input-container">
+                    <input type="text" id="search-input" placeholder="Search in extracted content...">
+                    <button id="search-btn"><i class="fas fa-search"></i></button>
+                </div>
+                <div class="search-stats">
+                    <span id="search-count">0</span> results found
+                    <div class="search-navigation">
+                        <button id="prev-match" disabled><i class="fas fa-chevron-up"></i></button>
+                        <span id="current-match">0</span> of <span id="total-matches">0</span>
+                        <button id="next-match" disabled><i class="fas fa-chevron-down"></i></button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="download-options hidden" id="download-options">
+                <h3>Download Options</h3>
+                <div class="download-buttons">
+                    <a href="#" id="download-original" class="download-btn">
+                        <i class="fas fa-download"></i> Download Original File
+                    </a>
+                    <a href="#" id="download-text" class="download-btn">
+                        <i class="fas fa-file-alt"></i> Download Extracted Text
+                    </a>
+                    <a href="#" id="download-audio" class="download-btn hidden">
+                        <i class="fas fa-file-audio"></i> Download Audio
+                    </a>
+                    <a href="#" id="download-video" class="download-btn hidden">
+                        <i class="fas fa-file-video"></i> Download Video
+                    </a>
+                </div>
+            </div>
+            
+            <div id="pages-container"></div>
+            
+            <div id="media-container" class="hidden">
+                <div id="audio-container" class="media-section hidden">
+                    <h3><i class="fas fa-headphones"></i> Audio Content</h3>
+                    <audio id="audio-player" controls></audio>
+                    <div class="transcription-container">
+                        <h4>Transcription</h4>
+                        <div id="audio-transcription" class="text-content"></div>
+                        <div class="actions">
+                            <button class="copy-btn"><i class="fas fa-copy"></i> Copy Transcription</button>
+                            <button class="download-transcription-btn"><i class="fas fa-download"></i> Download</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="video-container" class="media-section hidden">
+                    <h3><i class="fas fa-video"></i> Video Content</h3>
+                    <video id="video-player" controls></video>
+                    <div class="transcription-container">
+                        <h4>Subtitles/Transcription</h4>
+                        <div id="video-transcription" class="text-content"></div>
+                        <div class="actions">
+                            <button class="copy-btn"><i class="fas fa-copy"></i> Copy Subtitles</button>
+                            <button class="download-subtitles-btn"><i class="fas fa-download"></i> Download</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
+</body>
+</html>
